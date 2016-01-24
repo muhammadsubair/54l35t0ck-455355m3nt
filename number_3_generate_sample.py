@@ -1,4 +1,5 @@
 '''
+Env: python 2.7.6
 Purpose: 
 	Generate a list of 1 Million blacklisted name and phone number. Each line is one word(name), followed by space, then the phone number.
 	Example blacklist.txt:

@@ -1,4 +1,5 @@
 '''
+Env: python 2.7.6
 Purpose: 
     Solve question number 1;
     You are given a textfile that contains the age (Integer) of each people in Jakarta, let's assume Jakarta 10 Million people. The format of the file is very simple, each line is an integer representing age of one people.
@@ -21,7 +22,7 @@ Purpose:
 
 Methond:
     Using function quickSort
-    
+
 Sample execution:
     python number_1_solution_1.py <file_input> <file_output>
     python number_1_solution_1.py 'age.txt' 'sorted_age.txt'
