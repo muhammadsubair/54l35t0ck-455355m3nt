@@ -52,11 +52,7 @@ def main():
     print 'time for initialize: ', str(initialize_time) #print the time
     
     check_start = time.time() #start count the time
-    '''
-    This part of blacklist sample word to get True result
-    sqcwpq 39643088
-    uybwnk 34271577
-    '''
+    
     name = 'kxwpul'
     phone_number = '20068903'
     print 'Result is', check_blacklist(name, phone_number)
