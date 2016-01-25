@@ -23,8 +23,8 @@ Purpose:
     If age.txt contains the age of not only people in Jakarta, but the whole world (7 Billion People). Also, you only have a shitty laptop with 1GB of RAM. Can your script in part 1 handle this file? If not, how would you modify it so it can handle this kind of big file?
 
 Methond:
-     Assume the every age is 1 byte (using unsigned integer is range from 0 - 255). RAM size is 1 GB = 1,073,741,824 byte (and partly used by another process :D). The size of 7Billion age is around 7,000,000,000 , so it would not enough in RAM.
-     Ref from https://raw.githubusercontent.com/spiralout/external-sort/master/extsort.py
+     Assume the every age is 1 byte (using unsigned integer is range from 0 - 255). RAM size is 1 GB = 1,073,741,824 byte (and partly used by another process). The size of 7Billion age is around 7,000,000,000 , so it would not enough in RAM.
+     Ref https://gist.githubusercontent.com/arunenigma/8177109/raw/b951843d35335c8516b3cfbe456592974c32d76c/sort_mill.py, which also inspired by http://neopythonic.blogspot.co.id/2008/10/sorting-million-32-bit-integers-in-2mb.html
 
 Sample execution:
     python number_2_solution_1.py <file_input>
@@ -34,166 +34,60 @@ Output <file_input>.out
 '''
 import sys
 import time
+import array
+import heapq
+import random
+import struct
+import tempfile
 
 start_time = time.time() #start count the time
 
-# file_input = str(sys.argv[1])
-# file_output = str(sys.argv[2])
+file_input = str(sys.argv[1])
+file_output = str(sys.argv[2])
 
-#
-# Sort large text files in a minimum amount of memory
-#
-import os
-import sys
-import argparse
+# assertion throws an exception when integers are 64 bit i.e. 8 bytes
+# passes since my mac uses 4 bytes = 32 bits for integers | i -> signed int
+assert(array.array('i').itemsize == 4)
+# refer array module docs
 
-class FileSplitter(object):
-    BLOCK_FILENAME_FORMAT = 'block_{0}.dat'
+# convert input to format array 32 bits
+with open('inp.dat', 'wb') as inp:
+    # for _ in xrange(1000000):
+    with open(file_input, 'r') as f:
+        for line in f:
+            # ages.append(int(line))
+            integer = int(line)
+            b = struct.pack('i', integer)
+            inp.write(b)
 
-    def __init__(self, filename):
-        self.filename = filename
-        self.block_filenames = []
 
-    def write_block(self, data, block_number):
-        filename = self.BLOCK_FILENAME_FORMAT.format(block_number)
-        file = open(filename, 'w')
-        file.write(data)
-        file.close()
-        self.block_filenames.append(filename)
+def get_integers_from_file(tf):
+    while True:
+        arr = array.array('i')
+        arr.fromstring(tf.read(800000))  # 200000 integers of 4 bytes each = 800000 bytes
+        if not arr:
+            break
+        for i in arr:
+            yield i
 
-    def get_block_filenames(self):
-        return self.block_filenames
+iters = []
+inp = open('inp.dat', 'rb')
+while True:
+    a = array.array('i')
+    a.fromstring(inp.read(800000))
+    if not a:
+        break
+    f = tempfile.TemporaryFile()
+    array.array('i', sorted(a)).tofile(f)
+    f.seek(0)  # go to the zeroth bit
+    iters.append(get_integers_from_file(f))
 
-    def split(self, block_size, sort_key=None):
-        file = open(self.filename, 'r')
-        i = 0
-
-        while True:
-            lines = file.readlines(block_size)
-            # print lines
-
-            if lines == []:
-                break
-
-            if sort_key is None:
-                lines.sort()
-            else:
-                lines.sort(key=sort_key)
-
-            self.write_block(''.join(lines), i)
-            i += 1
-
-    def cleanup(self):
-        map(lambda f: os.remove(f), self.block_filenames)
-
-class NWayMerge(object):
-    def select(self, choices):
-        min_index = -1
-        min_str = None
-
-        for i in range(len(choices)):
-            if min_str is None or choices[i] < min_str:
-                min_index = i
-
-        return min_index
-
-class FilesArray(object):
-    def __init__(self, files):
-        self.files = files
-        self.empty = set()
-        self.num_buffers = len(files)
-        self.buffers = {i: None for i in range(self.num_buffers)}
-
-    def get_dict(self):
-        return {i: self.buffers[i] for i in range(self.num_buffers) if i not in self.empty}
-
-    def refresh(self):
-        for i in range(self.num_buffers):
-            if self.buffers[i] is None and i not in self.empty:
-                self.buffers[i] = self.files[i].readline()
-
-                if self.buffers[i] == '':
-                    self.empty.add(i)
-
-        if len(self.empty) == self.num_buffers:
-            return False
-
-        return True
-
-    def unshift(self, index):
-        value = self.buffers[index]
-        self.buffers[index] = None
-
-        return value
-
-class FileMerger(object):
-    def __init__(self, merge_strategy):
-        self.merge_strategy = merge_strategy
-
-    def merge(self, filenames, outfilename, buffer_size):
-        outfile = open(outfilename, 'w', buffer_size)
-        buffers = FilesArray(self.get_file_handles(filenames, buffer_size))
-
-        while buffers.refresh():
-            min_index = self.merge_strategy.select(buffers.get_dict())
-            outfile.write(buffers.unshift(min_index))
-
-    def get_file_handles(self, filenames, buffer_size):
-        files = {}
-
-        for i in range(len(filenames)):
-            files[i] = open(filenames[i], 'r', buffer_size)
-
-        return files
-
-class ExternalSort(object):
-    def __init__(self, block_size):
-        self.block_size = block_size
-
-    def sort(self, filename, sort_key=None):
-        num_blocks = self.get_number_blocks(filename, self.block_size)
-        splitter = FileSplitter(filename)
-        splitter.split(self.block_size, sort_key)
-
-        merger = FileMerger(NWayMerge())
-        buffer_size = self.block_size / (num_blocks + 1)
-        merger.merge(splitter.get_block_filenames(), filename + '.out', buffer_size)
-
-        splitter.cleanup()
-
-    def get_number_blocks(self, filename, block_size):
-        return (os.stat(filename).st_size / block_size) + 1
-
-def parse_memory(string):
-    if string[-1].lower() == 'k':
-        return int(string[:-1]) * 1024
-    elif string[-1].lower() == 'm':
-        return int(string[:-1]) * 1024 * 1024
-    elif string[-1].lower() == 'g':
-        return int(string[:-1]) * 1024 * 1024 * 1024
-    else:
-        return int(string)
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-m',
-                        '--mem',
-                        help='amount of memory to use for sorting',
-                        default='100M')
-    parser.add_argument('filename',
-                        metavar='<filename>',
-                        nargs=1,
-                        help='name of file to sort')
-    args = parser.parse_args()
-
-    sorter = ExternalSort(parse_memory(args.mem))
-    sorter.sort(args.filename[0])
-
-    print 'memory use = ', args.mem
-    print 'file output = ', args.filename[0] + '.out'
-
-if __name__ == '__main__':
-    main()
+a = array.array('i')
+out = open(file_output, 'wb')
+for x in heapq.merge(*iters):
+    a.append(x)
+out.write('\n'.join(map(str, a)))
+out.close()
 
 elapsed_time = time.time() - start_time #get the time
-print 'elapsed time = ', str(elapsed_time) #print the time
+print 'output = ', file_output, ', elapsed time: ', str(elapsed_time) #print the time
