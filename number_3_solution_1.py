@@ -30,8 +30,6 @@ Sample execution:
 '''
 import time
 
-start_time = time.time() #start count the time
-
 blacklist_data = '' #setup global variable to save blacklist data in memory
 
 def initialize(blacklist):
@@ -45,22 +43,25 @@ def check_blacklist(name, phone_number):
         return False
 
 def main():
+    initialize_start = time.time() #start count the time
+    
     global blacklist_data
     blacklist_data = initialize('blacklist.txt')
+    
+    initialize_time = time.time() - initialize_start #get the time
+    print 'time for initialize: ', str(initialize_time) #print the time
+    
+    check_start = time.time() #start count the time
     '''
     This part of blacklist sample word to get True result
     sqcwpq 39643088
     uybwnk 34271577
-    vlfffp 51875990
-    kxwpul 20068903
-    naorrh 03663934
-    dfvuvx 59725185
-    txnglc 98481995
     '''
     name = 'kxwpul'
     phone_number = '20068903'
-    print check_blacklist(name, phone_number)
-main()
+    print 'Result is', check_blacklist(name, phone_number)
+    
+    check_time = time.time() - check_start #get the time
+    print 'time for check blacklist: ', str(check_time) #print the time
 
-elapsed_time = time.time() - start_time #get the time
-print 'finish, elapsed time: ', str(elapsed_time) #print the time
+main()
