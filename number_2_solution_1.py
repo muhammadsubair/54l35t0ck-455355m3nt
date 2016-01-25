@@ -27,8 +27,8 @@ Methond:
      Ref https://gist.githubusercontent.com/arunenigma/8177109/raw/b951843d35335c8516b3cfbe456592974c32d76c/sort_mill.py, which also inspired by http://neopythonic.blogspot.co.id/2008/10/sorting-million-32-bit-integers-in-2mb.html
 
 Sample execution:
-    python number_2_solution_1.py <file_input>
-    python number_2_solution_1.py 'age.txt'
+    python number_2_solution_1.py <file_input> <file_output>
+    python number_2_solution_1.py 'age.txt' 'sorted_age.txt'
 
 Output <file_input>.out
 '''
