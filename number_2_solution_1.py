@@ -37,7 +37,7 @@ import time
 
 start_time = time.time() #start count the time
 
-file_input = str(sys.argv[1])
+# file_input = str(sys.argv[1])
 # file_output = str(sys.argv[2])
 
 #
@@ -70,6 +70,7 @@ class FileSplitter(object):
 
         while True:
             lines = file.readlines(block_size)
+            # print lines
 
             if lines == []:
                 break
@@ -188,8 +189,11 @@ def main():
     sorter = ExternalSort(parse_memory(args.mem))
     sorter.sort(args.filename[0])
 
+    print 'memory use = ', args.mem
+    print 'file output = ', args.filename[0] + '.out'
 
 if __name__ == '__main__':
     main()
+
 elapsed_time = time.time() - start_time #get the time
-print 'output = ', file_input + '.out, elapsed time: ', str(elapsed_time) #print the time
+print 'elapsed time = ', str(elapsed_time) #print the time
